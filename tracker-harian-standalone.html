@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0A1628">
+<title>Tracker Harian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A1628;
+    --surface:#101F35;
+    --surface-2:#16283F;
+    --border:rgba(226,232,240,0.08);
+    --border-strong:rgba(226,232,240,0.18);
+    --gold:#C9A227;
+    --blue:#6FA8DC;
+    --blue-soft:rgba(111,168,220,0.16);
+    --text:#E7ECF3;
+    --text-muted:#8398B5;
+    --success:#5FB88A;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:'Plus Jakarta Sans',sans-serif;-webkit-font-smoothing:antialiased;
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:32px 20px 60px;}
+  .top{text-align:center;margin-bottom:24px;}
+  .eyebrow{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue);}
+  h1{font-family:'Amiri',serif;font-weight:700;font-size:32px;margin:6px 0 4px;}
+  .date{font-size:14px;color:var(--text-muted);}
+  .streak-zone{display:flex;justify-content:center;margin:24px 0 20px;}
+  .star-ring{position:relative;width:168px;height:168px;display:flex;align-items:center;justify-content:center;}
+  .star-core{position:relative;z-index:2;text-align:center;}
+  .streak-num{font-family:'JetBrains Mono',monospace;font-weight:700;font-size:40px;color:var(--gold);line-height:1;}
+  .streak-label{font-size:11px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;margin-top:6px;}
+  .progress-bar{height:6px;background:var(--surface-2);border-radius:99px;overflow:hidden;margin-bottom:6px;}
+  .progress-fill{height:100%;background:var(--gold);border-radius:99px;transition:width 0.3s ease;width:0%;}
+  .progress-text{text-align:center;font-size:12px;color:var(--text-muted);margin-bottom:20px;font-family:'JetBrains Mono',monospace;}
+  .history-row{display:flex;gap:6px;justify-content:center;margin-bottom:28px;padding:0 4px;}
+  .history-day{flex:1;max-width:36px;display:flex;flex-direction:column;align-items:center;gap:5px;}
+  .history-bar-track{width:100%;height:44px;background:var(--surface-2);border-radius:6px;display:flex;align-items:flex-end;overflow:hidden;}
+  .history-bar-fill{width:100%;background:var(--blue);border-radius:6px 6px 0 0;transition:height 0.25s ease;}
+  .history-bar-fill.full{background:var(--gold);}
+  .history-day-label{font-size:10px;color:var(--text-muted);font-family:'JetBrains Mono',monospace;}
+  .section{margin-bottom:22px;}
+  .section-head{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+  .section-title{font-family:'Amiri',serif;font-size:18px;font-weight:700;}
+  .section-count{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-muted);margin-left:auto;}
+  .card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;overflow:hidden;}
+  .item-row{border-bottom:0.5px solid var(--border);}
+  .item-row:last-child{border-bottom:none;}
+  .item{display:flex;align-items:center;gap:12px;padding:13px 16px;cursor:pointer;user-select:none;}
+  .item:hover{background:var(--surface-2);}
+  .checkbox{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--border-strong);flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.15s ease;}
+  .item.done .checkbox{background:var(--success);border-color:var(--success);}
+  .checkbox i{font-size:13px;color:var(--bg);opacity:0;transform:scale(0.6);transition:all 0.15s ease;}
+  .item.done .checkbox i{opacity:1;transform:scale(1);}
+  .item-label{font-size:14px;color:var(--text);flex:1;}
+  .item.done .item-label{color:var(--text-muted);text-decoration:line-through;text-decoration-color:var(--border-strong);}
+  .item-icon{font-size:16px;color:var(--text-muted);width:18px;text-align:center;flex-shrink:0;}
+  .note-toggle{background:transparent;border:none;color:var(--text-muted);font-size:14px;cursor:pointer;flex-shrink:0;padding:4px;}
+  .note-toggle.has-note{color:var(--blue);}
+  .note-box{padding:0 16px 12px 48px;display:none;}
+  .note-box.open{display:block;}
+  .note-box textarea{width:100%;background:var(--surface-2);border:0.5px solid var(--border);border-radius:8px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;padding:8px 10px;resize:vertical;min-height:44px;}
+  .note-box textarea::placeholder{color:var(--text-muted);}
+  .extra-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:0.5px solid var(--border);}
+  .extra-item:last-child{border-bottom:none;}
+  .extra-text{flex:1;}
+  .extra-name{font-size:14px;color:var(--text);}
+  .extra-desc{font-size:12px;color:var(--text-muted);margin-top:2px;}
+  .add-btn{font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;color:var(--blue);background:var(--blue-soft);border:none;border-radius:8px;padding:7px 12px;cursor:pointer;flex-shrink:0;white-space:nowrap;}
+  .add-btn:hover{background:rgba(111,168,220,0.28);}
+  .footer-row{display:flex;justify-content:center;gap:10px;margin-top:8px;flex-wrap:wrap;}
+  .reset-btn{font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;color:var(--text-muted);background:transparent;border:0.5px solid var(--border);border-radius:8px;padding:8px 14px;cursor:pointer;}
+  .reset-btn:hover{border-color:var(--border-strong);color:var(--text);}
+  .hint{font-size:12px;color:var(--text-muted);text-align:center;margin-top:4px;margin-bottom:24px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="eyebrow">disiplin harian</div>
+    <h1>Tracker Harian</h1>
+    <div class="date" id="date-label"></div>
+  </div>
+
+  <div class="streak-zone">
+    <div class="star-ring">
+      <svg viewBox="0 0 168 168" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;opacity:0.5;">
+        <polygon points="84,20 96,64 140,64 105,90 118,134 84,108 50,134 63,90 28,64 72,64" fill="none" stroke="#C9A227" stroke-width="1.2" opacity="0.35"/>
+      </svg>
+      <div class="star-core">
+        <div class="streak-num" id="streak-num">0</div>
+        <div class="streak-label">hari beruntun</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  <div class="progress-text" id="progress-text">0 / 0 selesai hari ini</div>
+
+  <div class="history-row" id="history-row"></div>
+
+  <div id="app-body"></div>
+
+  <div class="footer-row">
+    <button class="reset-btn" id="reset-btn">Reset checklist hari ini</button>
+    <button class="reset-btn" id="export-btn">Export data (cadangan)</button>
+  </div>
+  <div class="hint">Data tersimpan di penyimpanan lokal browser HP kamu. Kalau kamu hapus cache/data browser, riwayat bisa hilang — gunakan tombol "Export data" sesekali untuk cadangan.</div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tabler-icons/2.44.0/iconfont/tabler-icons.min.css"></script>
+<script>
+(function(){
+
+  var STORAGE_PREFIX = 'tracker_harian_';
+
+  var CORE = [
+    {id:'subuh', label:'Sholat Subuh', icon:'ti-moon-stars', cat:'ibadah'},
+    {id:'dzuhur', label:'Sholat Dzuhur', icon:'ti-sun', cat:'ibadah'},
+    {id:'ashar', label:'Sholat Ashar', icon:'ti-sun-low', cat:'ibadah'},
+    {id:'maghrib', label:'Sholat Maghrib', icon:'ti-sunset-2', cat:'ibadah'},
+    {id:'isya', label:'Sholat Isya', icon:'ti-moon', cat:'ibadah'},
+    {id:'ngaji', label:'Baca Al-Quran', icon:'ti-book-2', cat:'ibadah'},
+    {id:'olahraga', label:'Olahraga', icon:'ti-run', cat:'kesehatan'},
+    {id:'mandi_pagi', label:'Mandi pagi', icon:'ti-droplet', cat:'kesehatan'},
+    {id:'mandi_sore', label:'Mandi sore', icon:'ti-droplet-half-2', cat:'kesehatan'},
+    {id:'tidur_ideal', label:'Tidur cukup semalam (7-8 jam)', icon:'ti-bed', cat:'kesehatan'},
+    {id:'beresin_kamar', label:'Beresin kamar', icon:'ti-home-2', cat:'rumah'},
+    {id:'masak', label:'Masak', icon:'ti-tools-kitchen-2', cat:'rumah'},
+    {id:'belajar', label:'Belajar', icon:'ti-school', cat:'diri'},
+    {id:'portofolio', label:'Portofolio / bukti hasil belajar', icon:'ti-briefcase', cat:'diri'},
+    {id:'journaling', label:'Journaling', icon:'ti-notebook', cat:'diri'}
+  ];
+
+  var EXTRAS = [
+    {id:'dzikir', name:'Dzikir pagi dan petang', desc:'Beberapa menit setelah Subuh dan Ashar'},
+    {id:'minum_air', name:'Minum air putih 8 gelas', desc:'Sebar sepanjang hari, bukan sekaligus'},
+    {id:'sedekah', name:'Sedekah harian', desc:'Walau kecil, biasakan tiap hari'},
+    {id:'baca_buku', name:'Baca buku non-Quran', desc:'Minimal 10 halaman'},
+    {id:'batasi_layar', name:'Batasi layar sebelum tidur', desc:'Tanpa HP 30 menit sebelum tidur'},
+    {id:'rapikan_meja', name:'Rapikan meja kerja/belajar', desc:'Sebelum mulai aktivitas'},
+    {id:'jalan_kaki', name:'Jalan kaki di luar rumah', desc:'10-15 menit, selain sesi olahraga utama'}
+  ];
+
+  var CAT_LABELS = {
+    ibadah:{title:'Ibadah', icon:'ti-moon-stars'},
+    kesehatan:{title:'Kesehatan', icon:'ti-heart'},
+    rumah:{title:'Rumah', icon:'ti-home-2'},
+    diri:{title:'Pengembangan diri', icon:'ti-bulb'}
+  };
+
+  var NOTE_PLACEHOLDERS = {
+    olahraga:'Jenis olahraga, durasi...',
+    masak:'Menu apa yang dimasak...',
+    belajar:'Topik yang dipelajari...',
+    portofolio:'Link/deskripsi bukti hasil belajar (repo, tulisan, tugas)...',
+    journaling:'Ringkasan singkat isi jurnal...',
+    ngaji:'Surat/juz yang dibaca...'
+  };
+
+  var today = new Date();
+  var dateKey = today.toISOString().slice(0,10);
+  var dayNames = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var dayShort = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  var monthNames = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  document.getElementById('date-label').textContent = dayNames[today.getDay()] + ', ' + today.getDate() + ' ' + monthNames[today.getMonth()] + ' ' + today.getFullYear();
+
+  var state = { done:{}, notes:{}, extrasEnabled:[] };
+  var openNotes = {};
+
+  function lsGet(key){
+    try{
+      var raw = localStorage.getItem(STORAGE_PREFIX + key);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function lsSet(key, value){
+    try{
+      localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify(value));
+    }catch(e){ console.error('Gagal menyimpan ke penyimpanan lokal', e); }
+  }
+
+  function allItems(){
+    var items = CORE.slice();
+    EXTRAS.forEach(function(e){
+      if(state.extrasEnabled.indexOf(e.id) !== -1){
+        items.push({id:e.id, label:e.name, icon:'ti-plus', cat:'ekstra', isExtra:true});
+      }
+    });
+    return items;
+  }
+
+  function loadDay(key){ return lsGet('day_' + key); }
+
+  function loadState(){
+    var d = loadDay(dateKey);
+    if(d){ state.done = d.done || {}; state.notes = d.notes || {}; }
+    var settings = lsGet('settings');
+    if(settings){ state.extrasEnabled = settings.extrasEnabled || []; }
+  }
+
+  function saveDayState(){
+    lsSet('day_' + dateKey, {done: state.done, notes: state.notes});
+  }
+
+  function saveSettings(){
+    lsSet('settings', {extrasEnabled: state.extrasEnabled});
+  }
+
+  function computeStreak(){
+    var streak = 0;
+    var cursor = new Date(today);
+    for(var i=0;i<365;i++){
+      var key = cursor.toISOString().slice(0,10);
+      var dayDone = key === dateKey ? state.done : (loadDay(key) || {}).done;
+      if(!dayDone) break;
+      var allCoreDone = CORE.every(function(item){ return dayDone[item.id]; });
+      if(!allCoreDone) break;
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+
+  function renderHistory(){
+    var row = document.getElementById('history-row');
+    row.innerHTML = '';
+    var days = [];
+    for(var i=6;i>=0;i--){
+      var d = new Date(today);
+      d.setDate(d.getDate() - i);
+      days.push(d);
+    }
+    days.forEach(function(d){
+      var key = d.toISOString().slice(0,10);
+      var dayDone = key === dateKey ? state.done : (loadDay(key) || {}).done || {};
+      var doneCount = CORE.filter(function(it){ return dayDone[it.id]; }).length;
+      var pct = Math.round((doneCount/CORE.length)*100);
+      var isFull = pct === 100;
+      var col = document.createElement('div');
+      col.className = 'history-day';
+      col.innerHTML = '<div class="history-bar-track"><div class="history-bar-fill ' + (isFull?'full':'') + '" style="height:' + pct + '%"></div></div><div class="history-day-label">' + dayShort[d.getDay()] + '</div>';
+      row.appendChild(col);
+    });
+  }
+
+  function render(){
+    var items = allItems();
+    var byCat = {};
+    items.forEach(function(it){
+      if(!byCat[it.cat]) byCat[it.cat] = [];
+      byCat[it.cat].push(it);
+    });
+
+    var order = ['ibadah','kesehatan','rumah','diri','ekstra'];
+    var html = '';
+    order.forEach(function(cat){
+      if(!byCat[cat]) return;
+      var label = cat === 'ekstra' ? {title:'Rekomendasi aktif', icon:'ti-star'} : CAT_LABELS[cat];
+      var doneCount = byCat[cat].filter(function(it){ return state.done[it.id]; }).length;
+      html += '<div class="section">';
+      html += '<div class="section-head"><i class="ti ' + label.icon + '" style="font-size:16px;color:var(--blue)" aria-hidden="true"></i><span class="section-title">' + label.title + '</span><span class="section-count">' + doneCount + '/' + byCat[cat].length + '</span></div>';
+      html += '<div class="card">';
+      byCat[cat].forEach(function(it){
+        var isDone = !!state.done[it.id];
+        var hasNote = !!(state.notes[it.id] && state.notes[it.id].trim());
+        var canNote = NOTE_PLACEHOLDERS.hasOwnProperty(it.id);
+        html += '<div class="item-row">';
+        html += '<div class="item ' + (isDone?'done':'') + '" data-id="' + it.id + '">';
+        html += '<div class="checkbox"><i class="ti ti-check" aria-hidden="true"></i></div>';
+        html += '<i class="ti ' + it.icon + ' item-icon" aria-hidden="true"></i>';
+        html += '<span class="item-label">' + it.label + '</span>';
+        if(canNote){
+          html += '<button class="note-toggle ' + (hasNote?'has-note':'') + '" data-noteid="' + it.id + '" aria-label="Tambah catatan"><i class="ti ti-pencil" aria-hidden="true"></i></button>';
+        }
+        html += '</div>';
+        if(canNote){
+          html += '<div class="note-box ' + (openNotes[it.id]?'open':'') + '" data-notebox="' + it.id + '">';
+          html += '<textarea data-notefield="' + it.id + '" placeholder="' + NOTE_PLACEHOLDERS[it.id] + '">' + (state.notes[it.id]||'') + '</textarea>';
+          html += '</div>';
+        }
+        html += '</div>';
+      });
+      html += '</div></div>';
+    });
+
+    var availableExtras = EXTRAS.filter(function(e){ return state.extrasEnabled.indexOf(e.id) === -1; });
+    if(availableExtras.length > 0){
+      html += '<div class="section">';
+      html += '<div class="section-head"><i class="ti ti-sparkles" style="font-size:16px;color:var(--blue)" aria-hidden="true"></i><span class="section-title">Rekomendasi tambahan</span></div>';
+      html += '<div class="card">';
+      availableExtras.forEach(function(e){
+        html += '<div class="extra-item">';
+        html += '<div class="extra-text"><div class="extra-name">' + e.name + '</div><div class="extra-desc">' + e.desc + '</div></div>';
+        html += '<button class="add-btn" data-extra="' + e.id + '">Tambahkan</button>';
+        html += '</div>';
+      });
+      html += '</div></div>';
+      html += '<div class="hint">Aktivitas tambahan bersifat opsional dan tidak memengaruhi hitungan beruntun.</div>';
+    }
+
+    document.getElementById('app-body').innerHTML = html;
+
+    document.querySelectorAll('.item').forEach(function(el){
+      el.addEventListener('click', function(e){
+        if(e.target.closest('.note-toggle')) return;
+        var id = el.getAttribute('data-id');
+        state.done[id] = !state.done[id];
+        saveDayState();
+        render();
+        updateProgress();
+        updateStreak();
+        renderHistory();
+      });
+    });
+
+    document.querySelectorAll('.note-toggle').forEach(function(btn){
+      btn.addEventListener('click', function(e){
+        e.stopPropagation();
+        var id = btn.getAttribute('data-noteid');
+        openNotes[id] = !openNotes[id];
+        render();
+      });
+    });
+
+    document.querySelectorAll('[data-notefield]').forEach(function(field){
+      field.addEventListener('click', function(e){ e.stopPropagation(); });
+      field.addEventListener('input', function(){
+        var id = field.getAttribute('data-notefield');
+        state.notes[id] = field.value;
+        saveDayState();
+      });
+    });
+
+    document.querySelectorAll('[data-extra]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-extra');
+        if(state.extrasEnabled.indexOf(id) === -1){
+          state.extrasEnabled.push(id);
+          saveSettings();
+          render();
+          updateProgress();
+        }
+      });
+    });
+  }
+
+  function updateProgress(){
+    var items = allItems();
+    var doneCount = items.filter(function(it){ return state.done[it.id]; }).length;
+    var pct = items.length ? Math.round((doneCount/items.length)*100) : 0;
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').textContent = doneCount + ' / ' + items.length + ' selesai hari ini';
+  }
+
+  function updateStreak(){
+    document.getElementById('streak-num').textContent = computeStreak();
+  }
+
+  document.getElementById('reset-btn').addEventListener('click', function(){
+    state.done = {};
+    state.notes = {};
+    saveDayState();
+    render();
+    updateProgress();
+    updateStreak();
+    renderHistory();
+  });
+
+  document.getElementById('export-btn').addEventListener('click', function(){
+    var all = {};
+    for(var i=0;i<localStorage.length;i++){
+      var k = localStorage.key(i);
+      if(k.indexOf(STORAGE_PREFIX) === 0){
+        all[k.replace(STORAGE_PREFIX,'')] = JSON.parse(localStorage.getItem(k));
+      }
+    }
+    var blob = new Blob([JSON.stringify(all, null, 2)], {type:'application/json'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'tracker-harian-backup-' + dateKey + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  loadState();
+  render();
+  updateProgress();
+  updateStreak();
+  renderHistory();
+
+})();
+</script>
+</body>
+</html>
